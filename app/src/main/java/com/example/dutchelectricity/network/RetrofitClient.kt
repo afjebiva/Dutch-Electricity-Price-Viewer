@@ -4,7 +4,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    private const val BASE_URL = "https://api.electricityprices.nl/"
+    private const val BASE_URL = "https://www.dynamisch-tarief.nl/"
 
     val apiService: DutchPricesApi by lazy {
         Retrofit.Builder()

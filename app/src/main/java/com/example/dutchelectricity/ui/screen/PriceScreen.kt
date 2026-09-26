@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.dutchelectricity.R
-import com.example.dutchelectricity.data.PriceData
+import com.example.dutchelectricity.data.QuarterHourPrice
 import com.example.dutchelectricity.ui.viewmodel.PriceViewModel
 
 @Composable
@@ -25,9 +25,11 @@ fun PriceScreen(viewModel: PriceViewModel) {
     val error by viewModel.error.collectAsState()
     val cheapestCount by viewModel.cheapestCount.collectAsState()
     val expensiveCount by viewModel.expensiveCount.collectAsState()
+    val hoursAhead by viewModel.hoursAhead.collectAsState()
 
     var cheapestInput by remember { mutableStateOf(cheapestCount.toString()) }
     var expensiveInput by remember { mutableStateOf(expensiveCount.toString()) }
+    var hoursInput by remember { mutableStateOf(hoursAhead.toString()) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchPrices()
@@ -49,37 +51,56 @@ fun PriceScreen(viewModel: PriceViewModel) {
         )
 
         // Input Section
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = cheapestInput,
+                    onValueChange = {
+                        cheapestInput = it
+                        it.toIntOrNull()?.let { count ->
+                            if (count >= 0) viewModel.updateCheapestCount(count)
+                        }
+                    },
+                    label = { Text("Cheapest") },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = expensiveInput,
+                    onValueChange = {
+                        expensiveInput = it
+                        it.toIntOrNull()?.let { count ->
+                            if (count >= 0) viewModel.updateExpensiveCount(count)
+                        }
+                    },
+                    label = { Text("Expensive") },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    singleLine = true
+                )
+            }
             OutlinedTextField(
-                value = cheapestInput,
+                value = hoursInput,
                 onValueChange = {
-                    cheapestInput = it
-                    it.toIntOrNull()?.let { count ->
-                        if (count >= 0) viewModel.updateCheapestCount(count)
+                    hoursInput = it
+                    it.toIntOrNull()?.let { hours ->
+                        if (hours in 1..36) viewModel.updateHoursAhead(hours)
                     }
                 },
-                label = { Text(stringResource(id = R.string.hint_cheapest)) },
+                label = { Text("Hours Ahead (1-36)") },
                 modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                singleLine = true
-            )
-            OutlinedTextField(
-                value = expensiveInput,
-                onValueChange = {
-                    expensiveInput = it
-                    it.toIntOrNull()?.let { count ->
-                        if (count >= 0) viewModel.updateExpensiveCount(count)
-                    }
-                },
-                label = { Text(stringResource(id = R.string.hint_expensive)) },
-                modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()
                     .height(56.dp),
                 singleLine = true
             )
@@ -100,7 +121,8 @@ fun PriceScreen(viewModel: PriceViewModel) {
             Text(
                 text = it,
                 color = Color.Red,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 8.dp),
+                fontSize = 12.sp
             )
         }
 
@@ -123,29 +145,38 @@ fun PriceScreen(viewModel: PriceViewModel) {
             // Price List
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 item {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         Text(
-                            text = stringResource(id = R.string.time_label),
+                            text = "Time",
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1.5f),
+                            fontSize = 10.sp
                         )
                         Text(
-                            text = stringResource(id = R.string.price_label),
+                            text = "Price",
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            fontSize = 10.sp
                         )
                         Text(
-                            text = stringResource(id = R.string.status_label),
+                            text = "Market",
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            fontSize = 10.sp
+                        )
+                        Text(
+                            text = "Status",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 10.sp
                         )
                     }
                 }
@@ -158,7 +189,7 @@ fun PriceScreen(viewModel: PriceViewModel) {
 }
 
 @Composable
-fun PriceRow(priceData: PriceData) {
+fun PriceRow(priceData: QuarterHourPrice) {
     val backgroundColor = when (priceData.status) {
         "cheap" -> colorResource(id = R.color.green_cheap)
         "expensive" -> colorResource(id = R.color.orange_expensive)
@@ -169,24 +200,32 @@ fun PriceRow(priceData: PriceData) {
         modifier = Modifier
             .fillMaxWidth()
             .background(backgroundColor, shape = MaterialTheme.shapes.small)
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = priceData.timestamp,
-            modifier = Modifier.weight(1f),
-            fontWeight = FontWeight.Medium
+            text = priceData.getTimeRange(),
+            modifier = Modifier.weight(1.5f),
+            fontWeight = FontWeight.Medium,
+            fontSize = 12.sp
         )
         Text(
-            text = "€ %.2f".format(priceData.price),
+            text = "€%.3f".format(priceData.price),
             modifier = Modifier.weight(1f),
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            fontSize = 11.sp
+        )
+        Text(
+            text = "€%.3f".format(priceData.marketPrice),
+            modifier = Modifier.weight(1f),
+            fontWeight = FontWeight.Medium,
+            fontSize = 10.sp
         )
         Text(
             text = priceData.status.uppercase(),
             modifier = Modifier.weight(1f),
-            fontSize = 10.sp,
+            fontSize = 9.sp,
             fontWeight = FontWeight.SemiBold
         )
     }
