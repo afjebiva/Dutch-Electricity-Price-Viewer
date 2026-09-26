@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dutch Electricity Price Viewer</string>
+    <string name="title_prices">Electricity Prices</string>
+    <string name="hint_cheapest">Number of cheapest slots</string>
+    <string name="hint_expensive">Number of expensive slots</string>
+    <string name="button_update">Update Prices</string>
+    <string name="loading">Loading prices...</string>
+    <string name="error_loading">Error loading prices</string>
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="no_data">No price data available</string>
+    <string name="time_label">Time</string>
+    <string name="price_label">Price (€)</string>
+    <string name="status_label">Status</string>
+</resources>
